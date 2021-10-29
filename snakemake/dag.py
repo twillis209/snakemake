@@ -1128,7 +1128,7 @@ class DAG:
                     for job in self.bfs(self.dependencies, job, stop=stop)
                     if self.needrun(job)
                 ),
-                self.workflow.global_resources
+                self.workflow.global_resources,
             )
 
             # merge with previously determined groups if present
@@ -1299,12 +1299,12 @@ class DAG:
             # All pipe groups should be contained within one user-defined group
             if len(user_groups) > 1:
                 raise WorkflowError(
-                        "An output file is marked as "
-                        "pipe, but consuming jobs "
-                        "are part of conflicting "
-                        "groups.",
-                        rule=job.rule,
-                    )
+                    "An output file is marked as "
+                    "pipe, but consuming jobs "
+                    "are part of conflicting "
+                    "groups.",
+                    rule=job.rule,
+                )
 
             if len(candidate_groups) > 1:
                 # Merge multiple pipe groups together
