@@ -16,6 +16,7 @@ from .conftest import skip_on_windows, only_on_windows, ON_WINDOWS, needs_strace
 
 from snakemake.jobs import GroupJob
 
+
 def test_list_untracked():
     run(dpath("test_list_untracked"))
 
@@ -936,6 +937,7 @@ def test_pathlib_missing_file():
 def test_group_jobs():
     run(dpath("test_group_jobs"), cluster="./qsub")
 
+
 @skip_on_windows
 def test_group_jobs_resources(mocker):
     spy = mocker.spy(GroupJob, "_calculate_resources")
@@ -943,10 +945,7 @@ def test_group_jobs_resources(mocker):
         dpath("test_group_jobs_resources"),
         cluster="./qsub",
         cores=6,
-        resources={
-            "typo": 23,
-            "mem_mb": 60000
-        },
+        resources={"typo": 23, "mem_mb": 60000},
         group_components={0: 5},
     )
     assert set(spy.spy_return.items()) == {
@@ -957,6 +956,7 @@ def test_group_jobs_resources(mocker):
         ("mem_mb", 60000),
         ("fake_res", 400),
     }
+
 
 @skip_on_windows
 def test_group_jobs_resources_with_max_threads(mocker):
@@ -1020,6 +1020,7 @@ def test_group_job_resources_with_pipe(mocker):
         ("mem_mb", 50000),
     }
 
+
 @skip_on_windows
 def test_group_job_resources_with_pipe_with_too_much_constraint(mocker):
     spy = mocker.spy(GroupJob, "_calculate_resources")
@@ -1031,8 +1032,9 @@ def test_group_job_resources_with_pipe_with_too_much_constraint(mocker):
             "mem_mb": 20000,
         },
         group_components={0: 5},
-        shouldfail=True
+        shouldfail=True,
     )
+
 
 @skip_on_windows
 def test_multicomp_group_jobs():

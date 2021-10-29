@@ -1129,7 +1129,7 @@ class DAG:
                     for job in self.bfs(self.dependencies, job, stop=stop)
                     if self.needrun(job)
                 ),
-                self.workflow.global_resources
+                self.workflow.global_resources,
             )
 
             # merge with previously determined groups if present
