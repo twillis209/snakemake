@@ -196,6 +196,7 @@ class Job(AbstractJob):
         self._benchmark = None
         self._resources = None
         self._conda_env_spec = None
+        self._local_resources = None
         self._conda_env = None
         self._group = None
 
@@ -340,6 +341,20 @@ class Job(AbstractJob):
                 self.wildcards_dict, self.input, self.attempt
             )
         return self._resources
+
+    @property
+    def local_resources(self):
+        if self._local_resources is None:
+            if self.is_local:
+                self._local_resources = self.resources
+            else:
+                self._local_resources = Resources(
+                    fromdict={
+                        k: self.resources[k]
+                        for k in {"_cores", "_nodes"} & {*self.resources.keys()}
+                    }
+                )
+        return self._local_resources
 
     def reset_params_and_resources(self):
         self._resources = None
@@ -1171,6 +1186,7 @@ class GroupJob(AbstractJob):
         self.global_resources = global_resources
         self.toposorted = None
         self._resources = None
+        self._local_resources = None
         self._input = None
         self._output = None
         self._log = None
@@ -1345,6 +1361,20 @@ class GroupJob(AbstractJob):
         if self._resources is None:
             self._resources = self._calculate_resources()
         return Resources(fromdict=self._resources)
+
+    @property
+    def local_resources(self):
+        if self._local_resources is None:
+            if self.is_local:
+                self._local_resources = self.resources
+            else:
+                self._local_resources = Resources(
+                    fromdict={
+                        k: self.resources[k]
+                        for k in {"_cores", "_nodes"} & {*self.resources.keys()}
+                    }
+                )
+        return self._local_resources
 
     @property
     def input(self):
@@ -1546,9 +1576,6 @@ class GroupJob(AbstractJob):
         # iterate over siblings that can be executed in parallel
         for siblings in self.toposorted:
 
-            # Make a copy of global_resources so that we can safely overwrite _cores
-            global_resources = copy.copy(self.global_resources)
-
             job_resources = []
             pipe_resources = defaultdict(list)
             for job in siblings:
@@ -1621,7 +1648,7 @@ class GroupJob(AbstractJob):
             # resource not specified in global_resources will be initialized with None
             constraints = OrderedDict(
                 [
-                    (name, global_resources[name] if name in global_resources else None)
+                    (name, self.global_resources.get(name, None))
                     for name in int_resources
                 ]
             )
@@ -1668,12 +1695,18 @@ class GroupJob(AbstractJob):
             blocks.append(block_resources)
 
         if self.dag.workflow.run_local:
-            return {**self._simple_merge(blocks, use_max=False), "_nodes": 1}
+            return Resources(
+                fromdict={**self._simple_merge(blocks, use_max=False), "_nodes": 1}
+            )
         else:
-            return {
-                **self._simple_merge(blocks, use_max=True, merge_via_other=["runtime"]),
-                "_nodes": 1,
-            }
+            return Resources(
+                fromdict={
+                    **self._simple_merge(
+                        blocks, use_max=True, merge_via_other=["runtime"]
+                    ),
+                    "_nodes": 1,
+                }
+            )
 
     def _is_string_resource(self, name, values):
         # If any one of the values provided for a resource is not an int, we
