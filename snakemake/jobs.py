@@ -345,7 +345,7 @@ class Job(AbstractJob):
     @property
     def local_resources(self):
         if self._local_resources is None:
-            if self.is_local:
+            if self.dag.workflow.run_local or self.is_local:
                 self._local_resources = self.resources
             else:
                 self._local_resources = Resources(
@@ -1605,8 +1605,8 @@ class GroupJob(AbstractJob):
                         job_resources.append(res)
                 except FileNotFoundError:
                     # Skip job if resource evaluation leads to a file not found error.
-                    # This will be caused by an inner job, which needs files created by the same group.
-                    # All we can do is to ignore such jobs for now.
+                    # This will be caused by an inner job, which needs files created by
+                    # the same group. All we can do is to ignore such jobs for now.
                     continue
 
             for pipe in pipe_resources.values():

@@ -343,6 +343,7 @@ class RealExecutor(AbstractExecutor):
                 format_cli_arg("--cores", kwargs.get("cores", self.cores)),
                 format_cli_arg("--attempt", job.attempt),
                 format_cli_arg("--force-use-threads", not job.is_group()),
+                self.get_resource_declarations(job),
             ]
         )
 
@@ -366,6 +367,10 @@ class RealExecutor(AbstractExecutor):
 
     @abstractmethod
     def get_envvar_declarations(self):
+        ...
+
+    @abstractmethod
+    def get_resource_declarations(self, job):
         ...
 
     def get_job_exec_prefix(self, job):
@@ -463,6 +468,9 @@ class CPUExecutor(RealExecutor):
         return sys.executable
 
     def get_envvar_declarations(self):
+        return ""
+
+    def get_resources_declarations(self, job):
         return ""
 
     def get_job_args(self, job, **kwargs):
@@ -748,6 +756,16 @@ class ClusterExecutor(RealExecutor):
             )
         else:
             return ""
+
+    def get_resource_declarations(self, job):
+        resources = [
+            f"{resource}={value}"
+            for resource, value in job.resources.items()
+            if isinstance(value, int)
+            and resource not in ["_nodes", "_cores", "runtime"]
+        ]
+        return format_cli_arg("--resources", resources)
+
 
     def get_python_executable(self):
         return sys.executable if self.assume_shared_fs else "python"
