@@ -346,6 +346,15 @@ class RealExecutor(AbstractExecutor):
         if self.workflow.printshellcmds:
             printshellcmds = "-p"
 
+        resources = [
+            "--resources",
+            *(
+                "{resource}={value}".format(resource=resource, value=value)
+                for resource, value in self.workflow.global_resources.items()
+                if resource not in ["_nodes", "_cores"]
+            )
+        ]
+
         if not job.is_branched and not job.is_updated:
             # Restrict considered rules. This does not work for updated jobs
             # because they need to be updated in the spawned process as well.
@@ -377,6 +386,7 @@ class RealExecutor(AbstractExecutor):
             benchmark_repeats=job.benchmark_repeats if not job.is_group() else None,
             target=target,
             rules=rules,
+            resources=resources,
             **kwargs,
         )
         return cmd
@@ -688,7 +698,7 @@ class ClusterExecutor(RealExecutor):
                     "--force --cores {cores} --keep-target-files --keep-remote --max-inventory-time 0 ",
                     "{waitfiles_parameter:u} --latency-wait {latency_wait} ",
                     " --attempt {attempt} {use_threads} --scheduler {workflow.scheduler_type} ",
-                    "--wrapper-prefix {workflow.wrapper_prefix} ",
+                    "--wrapper-prefix {workflow.wrapper_prefix} {resources} ",
                     "{overwrite_workdir} {overwrite_config} {printshellcmds} {rules} "
                     "--nocolor --notemp --no-hooks --nolock {scheduler_solver_path:u} ",
                     "--mode {} ".format(Mode.cluster),
