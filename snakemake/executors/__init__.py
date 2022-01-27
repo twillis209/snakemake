@@ -351,7 +351,11 @@ class RealExecutor(AbstractExecutor):
             *(
                 "{resource}={value}".format(resource=resource, value=value)
                 for resource, value in job.resources.items()
-                if resource not in ["_nodes", "_cores"] and isinstance(value, int)
+                if isinstance(value, int) and resource not in [
+                    "_nodes",
+                    "_cores",
+                    "runtime"
+                ]
             )
         ]
 
