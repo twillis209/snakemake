@@ -1481,6 +1481,16 @@ class GroupJob(AbstractJob):
     def is_local(self):
         return all(job.is_local for job in self.jobs)
 
+    def merged_wildcards(self):
+        jobs_iter = iter(self.jobs)
+        merged_wildcards = Wildcards(toclone=next(jobs_iter).wildcards)
+        for job in jobs_iter:
+            for name, value in job.wildcards.items():
+                if name not in merged_wildcards.keys():
+                    merged_wildcards.append(value)
+                    merged_wildcards._add_name(name)
+        return merged_wildcards
+
     def format_wildcards(self, string, **variables):
         """Format a string with variables from the job."""
         _variables = dict()
@@ -1492,6 +1502,7 @@ class GroupJob(AbstractJob):
                 threads=self.threads,
                 jobid=self.jobid,
                 name=self.name,
+                wildcards=self.merged_wildcards(),
                 rule="GROUP",
                 rulename="GROUP",
                 resources=self.resources,
